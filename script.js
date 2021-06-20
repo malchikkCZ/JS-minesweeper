@@ -1,8 +1,13 @@
 const fieldSize = 10;
 const restartButton = document.getElementById("restart");
+const resultField = document.getElementById("result");
 
-const bombSymbol = "&#128165;";
+const mineSymbol = "&#10060;";
 const flagSymbol = "&#128681;";
+const explosionSymbol = "&#128165;";
+
+const lostEmoji = "&#128555;";
+const winEmoji = "&#128515;";
 
 restartButton.addEventListener("click", newGame);
 
@@ -52,7 +57,7 @@ class Board {
             this.board.push([]);
             for (let c = 0; c < this.size; c++) {
                 let button = document.createElement("button");
-                button.setAttribute("name", r.toString() + c.toString());
+                button.setAttribute("id", r.toString() + "-" + c.toString());
                 button.addEventListener("click", function () {
                     clicked(this)
                 });
@@ -99,8 +104,50 @@ class Board {
         for (let r = 0; r < this.size; r++) {
             for (let c = 0; c < this.size; c++) {
                 field.appendChild(this.board[r][c]);
-                // this.board[r][c].innerHTML = this.map[r][c]; // remove this line before final version of game
             }
+        }
+    }
+
+    showAllMines() {
+        for (let r = 0; r < this.size; r++) {
+            for (let c = 0; c < this.size; c++) {
+                if (this.board[r][c].disabled === true) {
+                    continue;
+                }
+                if (this.board[r][c].innerHTML === "") {
+                    if (this.map[r][c] === -1) {
+                        this.board[r][c].innerHTML = mineSymbol;
+                    } else if (this.map[r][c] > 0) {
+                        this.board[r][c].innerHTML = this.map[r][c].toString();
+                    }
+                }
+                this.board[r][c].disabled = true;
+                this.board[r][c].style.borderStyle = "none";
+            }
+        }
+    }
+
+    isClear(r, c) {
+        if (this.map[r][c] === -1) {
+            return false;
+        }
+        return true;
+    }
+
+    reveal(r, c) {
+        if (this.board[r][c].disabled === true) {
+            return;
+        }
+        this.board[r][c].disabled = true;
+        this.board[r][c].style.borderStyle = "none";
+        if (this.map[r][c] === 0) {
+            for (let row = Math.max(0, r - 1); row <= Math.min(this.size - 1, r + 1); row++) {
+                for (let col = Math.max(0, c - 1); col <= Math.min(this.size - 1, c + 1); col++) {
+                    this.reveal(row, col);
+                }
+            }
+        } else if (this.map[r][c] > 0) {
+            this.board[r][c].innerHTML = this.map[r][c].toString();
         }
     }
 }
@@ -110,8 +157,14 @@ function clicked(button) {
         button.innerHTML = "";
         scoreBoard.removeFlag();
     }
-    button.style.borderStyle = "none";
-    button.disabled = true;
+    let row = parseInt(button.id.split("-")[0]);
+    let col = parseInt(button.id.split("-")[1]);
+    if (board.isClear(row, col)) {
+        board.reveal(row, col);
+    } else {
+        button.innerHTML = explosionSymbol;
+        gameOver();
+    }
 }
 
 function raiseFlag(button) {
@@ -122,6 +175,15 @@ function raiseFlag(button) {
         button.innerHTML = "";
         scoreBoard.removeFlag();
     }
+}
+
+function gameOver() {
+    board.showAllMines();
+    restartButton.innerHTML = lostEmoji;
+    let result = document.createElement("h3");
+    resultField.appendChild(result);
+    result.innerHTML = "Game over";
+
 }
 
 function newGame() {
