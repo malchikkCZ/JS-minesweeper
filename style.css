@@ -46,6 +46,7 @@
     height: 30px;
     padding: 0;
     border: 2px outset black;
+    font-size: 18px;
 }
 
 #field button:active {

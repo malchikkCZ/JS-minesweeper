@@ -1,6 +1,9 @@
 const fieldSize = 10;
 const restartButton = document.getElementById("restart");
 
+const bombSymbol = "&#128165;";
+const flagSymbol = "&#128681;";
+
 restartButton.addEventListener("click", newGame);
 
 class ScoreBoard {
@@ -24,6 +27,18 @@ class ScoreBoard {
             listOfNumbers.unshift("0");
         }
         return listOfNumbers.join("");
+    }
+
+    addFlag() {
+        this.minesLeft -= 1;
+        this.flagsRisen += 1;
+        this.showScore();
+    }
+
+    removeFlag() {
+        this.minesLeft += 1;
+        this.flagsRisen -= 1;
+        this.showScore();
     }
 }
 
@@ -84,15 +99,29 @@ class Board {
         for (let r = 0; r < this.size; r++) {
             for (let c = 0; c < this.size; c++) {
                 field.appendChild(this.board[r][c]);
-                this.board[r][c].innerHTML = map[r][c]; // remove this line before final version of game
+                // this.board[r][c].innerHTML = this.map[r][c]; // remove this line before final version of game
             }
         }
     }
 }
 
 function clicked(button) {
+    if ((button.innerHTML !== "") && (scoreBoard.flagsRisen > 0)) {
+        button.innerHTML = "";
+        scoreBoard.removeFlag();
+    }
     button.style.borderStyle = "none";
     button.disabled = true;
+}
+
+function raiseFlag(button) {
+    if ((button.innerHTML === "") && (scoreBoard.flagsRisen < fieldSize)) {
+        button.innerHTML = flagSymbol;
+        scoreBoard.addFlag();
+    } else if ((button.innerHTML !== "") && (scoreBoard.flagsRisen > 0)) {
+        button.innerHTML = "";
+        scoreBoard.removeFlag();
+    }
 }
 
 function newGame() {
