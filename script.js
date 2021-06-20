@@ -1,5 +1,6 @@
 const fieldSize = 10;
 const restartButton = document.getElementById("restart");
+const fieldMap = document.getElementById("field");
 const resultField = document.getElementById("result");
 
 const mineSymbol = "&#10060;";
@@ -10,6 +11,8 @@ const lostEmoji = "&#128555;";
 const winEmoji = "&#128515;";
 
 restartButton.addEventListener("click", newGame);
+fieldMap.style.gridTemplateColumns = "repeat(" + fieldSize + ", 30px)";
+
 
 class ScoreBoard {
     constructor(size) {
@@ -52,6 +55,8 @@ class Board {
         this.map = [];
         this.board = [];
         this.size = size;
+        this.mines = [];
+        this.flags = [];
         for (let r = 0; r < this.size; r++) {
             this.map.push([]);
             this.board.push([]);
@@ -73,13 +78,12 @@ class Board {
     }
 
     initialize() {
-        let mines = 0;
-        while (mines < this.size) {
+        while (this.mines.length < this.size) {
             let row = Math.floor(Math.random() * this.size);
             let col = Math.floor(Math.random() * this.size);
             if (this.map[row][col] !== -1) {
                 this.map[row][col] = -1;
-                mines++;
+                this.mines.push(this.board[row][col]);
             }
         }
         for (let r = 0; r < this.size; r++) {
@@ -99,11 +103,9 @@ class Board {
     }
 
     drawBoard() {
-        let field = document.getElementById("field");
-        field.style.gridTemplateColumns = "repeat(" + this.size + ", 30px)";
         for (let r = 0; r < this.size; r++) {
             for (let c = 0; c < this.size; c++) {
-                field.appendChild(this.board[r][c]);
+                fieldMap.appendChild(this.board[r][c]);
             }
         }
     }
@@ -130,6 +132,15 @@ class Board {
     isClear(r, c) {
         if (this.map[r][c] === -1) {
             return false;
+        }
+        return true;
+    }
+
+    isOver() {
+        for (let mine of this.mines) {
+            if (this.flags.indexOf(mine) < 0) {
+                return false;
+            }
         }
         return true;
     }
@@ -163,27 +174,41 @@ function clicked(button) {
         board.reveal(row, col);
     } else {
         button.innerHTML = explosionSymbol;
-        gameOver();
+        gameLost();
     }
 }
 
 function raiseFlag(button) {
     if ((button.innerHTML === "") && (scoreBoard.flagsRisen < fieldSize)) {
         button.innerHTML = flagSymbol;
+        board.flags.push(button);
         scoreBoard.addFlag();
     } else if ((button.innerHTML !== "") && (scoreBoard.flagsRisen > 0)) {
         button.innerHTML = "";
         scoreBoard.removeFlag();
+        board.flags.splice(board.flags.indexOf(button), 1);
+    }
+    if (board.isOver()) {
+        gameWon();
     }
 }
 
-function gameOver() {
+function gameWon() {
+    board.showAllMines();
+    restartButton.innerHTML = winEmoji;
+    fieldMap.style.borderColor = "green";
+    let result = document.createElement("h3");
+    resultField.appendChild(result);
+    result.innerHTML = "Cleared";
+}
+
+function gameLost() {
     board.showAllMines();
     restartButton.innerHTML = lostEmoji;
+    fieldMap.style.borderColor = "red";
     let result = document.createElement("h3");
     resultField.appendChild(result);
     result.innerHTML = "Game over";
-
 }
 
 function newGame() {
@@ -191,4 +216,4 @@ function newGame() {
 }
 
 let board = new Board(fieldSize);
-let scoreBoard = new ScoreBoard(fieldSize);
+let scoreBoard = new ScoreBoard(board.mines.length);
