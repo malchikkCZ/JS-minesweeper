@@ -1,8 +1,12 @@
 const fieldSize = 10;
+const restartButton = document.getElementById("restart");
+
+restartButton.addEventListener("click", newGame);
 
 class ScoreBoard {
     constructor(size) {
-        this.minesLeft = size;
+        this.size = size;
+        this.minesLeft = this.size;
         this.flagsRisen = 0;
         this.showScore();
     }
@@ -25,19 +29,53 @@ class ScoreBoard {
 
 class Board {
     constructor(size) {
+        this.map = [];
         this.board = [];
         this.size = size;
         for (let r = 0; r < this.size; r++) {
+            this.map.push([]);
             this.board.push([]);
             for (let c = 0; c < this.size; c++) {
                 let button = document.createElement("button");
+                button.setAttribute("name", r.toString() + c.toString());
                 button.addEventListener("click", function () {
                     clicked(this)
                 });
+                button.addEventListener("contextmenu", function () {
+                    raiseFlag(this)
+                });
+                this.map[r].push(0);
                 this.board[r].push(button);
             }
         }
+        this.initialize();
         this.drawBoard();
+    }
+
+    initialize() {
+        let mines = 0;
+        while (mines < this.size) {
+            let row = Math.floor(Math.random() * this.size);
+            let col = Math.floor(Math.random() * this.size);
+            if (this.map[row][col] !== -1) {
+                this.map[row][col] = -1;
+                mines++;
+            }
+        }
+        for (let r = 0; r < this.size; r++) {
+            for (let c = 0; c < this.size; c++) {
+                if (this.map[r][c] === -1) {
+                    continue;
+                }
+                for (let row = Math.max(0, r - 1); row < Math.min(this.size - 1, r + 1) + 1; row++) {
+                    for (let col = Math.max(0, c - 1); col < Math.min(this.size - 1, c + 1) + 1; col++) {
+                        if (this.map[row][col] === -1) {
+                            this.map[r][c] += 1;
+                        }
+                    }
+                }
+            }
+        }
     }
 
     drawBoard() {
@@ -46,17 +84,20 @@ class Board {
         for (let r = 0; r < this.size; r++) {
             for (let c = 0; c < this.size; c++) {
                 field.appendChild(this.board[r][c]);
+                this.board[r][c].innerHTML = map[r][c]; // remove this line before final version of game
             }
         }
     }
 }
 
 function clicked(button) {
-    console.log("clicked");
     button.style.borderStyle = "none";
     button.disabled = true;
 }
 
+function newGame() {
+    window.location.reload();
+}
 
 let board = new Board(fieldSize);
 let scoreBoard = new ScoreBoard(fieldSize);
